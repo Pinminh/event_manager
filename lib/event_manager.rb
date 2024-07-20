@@ -7,6 +7,15 @@ def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0').slice(0, 5)
 end
 
+def clean_phone_number(phone_number)
+  phone_number = phone_number.gsub(/\D/, '')
+
+  return nil unless [10, 11].include?(phone_number.length)
+  return phone_number if phone_number.length == 10
+  return phone_number.slice(1..-1) if phone_number[0] == 1
+  nil
+end
+
 def legislators_by_zip(zipcode)
   civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
   civic_info.key = 'AIzaSyClRzDqDh5MsXwnCWi0kOiiBivP6JsSyBw'
