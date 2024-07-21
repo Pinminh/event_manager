@@ -15,6 +15,8 @@ def clean_phone_number(phone_number)
   nil
 end
 
+# Return an array of officials associated with zipcode, or return a string
+# indicating that officials cannot be found
 def legislators_by_zip(zipcode)
   civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
   civic_info.key = 'AIzaSyClRzDqDh5MsXwnCWi0kOiiBivP6JsSyBw'
@@ -31,6 +33,7 @@ def legislators_by_zip(zipcode)
   end
 end
 
+# Save processed letter into file whose name is label by the id passed
 def save_thank_letter(id, letter)
   Dir.mkdir('output') unless Dir.exist?('output')
   filename = "output/thanks_#{id}.html"
@@ -40,23 +43,32 @@ def save_thank_letter(id, letter)
   end
 end
 
-puts 'Event Manager Initialized!'
-
-contents = CSV.open(
-  'samples/event_attendees.csv',
-  headers: true,
-  header_converters: :symbol
-)
-
-template_letter = File.read('form_letter.erb')
-erb_template_letter = ERB.new(template_letter)
-
-contents.each do |row|
-  attendee_name = row[:first_name]
-  zipcode = clean_zipcode(row[:zipcode])
-  legislators = legislators_by_zip(zipcode)
-
-  form_letter = erb_template_letter.result(binding)
-
-  save_thank_letter(row[0], form_letter)
+# Return CSV parser or contents (can be looped through)
+def csv_parser(csv_path)
+  CSV.open(
+    csv_path,
+    headers: true,
+    header_converters: :symbol
+  )
 end
+
+# Save all thank-you letters with given ERB template from provided CSV
+def save_letters_from_csv(csv_path, letter_erb_path)
+  contents = csv_parser(csv_path)  
+
+  template_letter = File.read(letter_erb_path)
+  erb_template_letter = ERB.new(template_letter)
+
+  contents.each do |row|
+    attendee_id = row[0]
+    attendee_name = row[:first_name]
+    zipcode = clean_zipcode(row[:zipcode])
+    legislators = legislators_by_zip(zipcode)
+
+    form_letter = erb_template_letter.result(binding)
+
+    save_thank_letter(attendee_id, form_letter)
+  end
+end
+
+puts 'Event Manager Initialized!'
